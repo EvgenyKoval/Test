@@ -8,7 +8,7 @@ import java.io.*;
 public class Saver {
     private String name;
     private String data;
-    private static int partCount = 0;
+    private static Integer partCount = 0;
     private static boolean isLast = false;
 
 
@@ -21,41 +21,46 @@ public class Saver {
     }
 
     public void savePart() {
-        try {
-            File file = new File("../work/" + name);
-            FileWriter fileWriter = new FileWriter(file);
+        File file = new File("../work/" + name);
+        try (FileWriter fileWriter = new FileWriter(file)) {
             if (file.canWrite()) {
                 fileWriter.write(data);
                 fileWriter.flush();
-                fileWriter.close();
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
         if (isLast) {
-            try {
-                makeFile();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            makeFile();
         }
     }
 
-    public void makeFile() throws Exception {
+    public void makeFile() {
         File dir = new File("../work/");
         File[] files = dir.listFiles();
+
         System.out.println("dir contain " + files.length + " files");
-        if (files.length == partCount) {
+        if (files.length >= partCount) {
             File finalFile = new File("../work/Final");
-            FileWriter fileWriter = new FileWriter(finalFile);
-            BufferedReader reader;
-            for (File file : files) {
-                reader = new BufferedReader(new FileReader(file));
-                fileWriter.write(reader.readLine());
-                reader.close();
+
+            try (FileWriter fileWriter = new FileWriter(finalFile)) {
+                for (int i = 1; i <= partCount; i++) {
+                    File file = new File("../work/" + String.valueOf(i));
+                    try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+                        String tmp = reader.readLine();
+                        while (tmp != null) {
+                            if (finalFile.canWrite()) {
+                                fileWriter.write(tmp);
+                            }
+                            tmp = reader.readLine();
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            fileWriter.flush();
-            fileWriter.close();
         }
     }
 }
